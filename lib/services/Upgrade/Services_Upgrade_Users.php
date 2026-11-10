@@ -284,6 +284,11 @@ class Services_Upgrade_Users
             $this->setSettingIfNot($user['prefs'], 'show_avatars', true);
             $this->setSettingIfNot($user['prefs'], 'usemailaddress_for_gravatar', true);
 
+            // columns shown in the spot list (all on by default)
+            foreach (Services_User_Util::listColumnKeys() as $listColumn) {
+                $this->setSettingIfNot($user['prefs']['list_columns'], $listColumn, true);
+            } // foreach
+
             $this->setSettingIfNot($user['prefs']['nzbhandling'], 'action', 'disable');
             $this->setSettingIfNot($user['prefs']['nzbhandling'], 'local_dir', '/tmp');
             $this->setSettingIfNot($user['prefs']['nzbhandling'], 'prepare_action', 'merge');

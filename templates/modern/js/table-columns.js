@@ -1,13 +1,16 @@
 /*
  * Table view: fixed layout that always fits the available width, with
- * columns the user can make wider or narrower by dragging the right edge
- * of a column header. The title column takes the remaining space.
+ * columns the user can
+ *   - make wider or narrower by dragging the right edge of a column header
+ *   - reorder by dragging a column header onto another one.
+ * The title column takes the remaining space.
  *
- * Widths are remembered in localStorage; double-click a handle to reset
- * that column to its default width.
+ * Widths and order are remembered in localStorage; double-click a resize
+ * handle to reset that column to its default width.
  */
 (function () {
-  var STORAGE_KEY = 'spotweb_table_cols';
+  var WIDTH_KEY = 'spotweb_table_cols';
+  var ORDER_KEY = 'spotweb_table_order';
   var FLEX_CLASS = 'title';   // column that absorbs the remaining width
   var MIN_FLEX = 120;         // title never gets narrower than this (px)
   var MIN_COL = 24;           // no other column gets narrower than this (px)
@@ -20,18 +23,20 @@
   function qs(sel, root) { return (root || document).querySelector(sel); }
   function qsa(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
 
-  function load() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch (e) { return {}; }
+  function loadJson(key, fallback) {
+    try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (e) { return fallback; }
   }
-  function save(widths) {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(widths)); } catch (e) { /* ignore */ }
+  function saveJson(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* ignore */ }
   }
 
-  function colClass(th) {
+  // Column key of a header or body cell: the first known class it carries.
+  function cellKey(el) {
+    if (el.classList.contains(FLEX_CLASS)) { return FLEX_CLASS; }
     for (var cls in DEFAULTS) {
-      if (th.classList.contains(cls)) { return cls; }
+      if (el.classList.contains(cls)) { return cls; }
     }
-    return th.classList.contains(FLEX_CLASS) ? FLEX_CLASS : null;
+    return null;
   }
 
   function init() {
@@ -40,52 +45,174 @@
     if (!head || table.dataset.resizable) { return; }
     table.dataset.resizable = '1';
 
-    var ths = qsa('th', head);
-    var stored = load();
+    var storedWidths = loadJson(WIDTH_KEY, {});
     var colgroup = document.createElement('colgroup');
-    var cols = [];
+    var cols = [];   // { th, col, key } in current display order
 
-    ths.forEach(function (th) {
-      var cls = colClass(th);
+    qsa('th', head).forEach(function (th) {
+      var key = cellKey(th);
       var col = document.createElement('col');
-      if (cls && cls !== FLEX_CLASS) {
-        col.style.width = (stored[cls] || DEFAULTS[cls]) + 'px';
+      if (key && key !== FLEX_CLASS) {
+        col.style.width = (storedWidths[key] || DEFAULTS[key]) + 'px';
       }
       colgroup.appendChild(col);
-      cols.push({ th: th, col: col, cls: cls });
+      cols.push({ th: th, col: col, key: key });
     });
 
     table.insertBefore(colgroup, table.firstChild);
     table.classList.add('resizable');
 
-    // The title column can only be resized by moving the border with its neighbour.
-    cols.forEach(function (c, i) {
-      if (!c.cls) { return; }
+    // ---------- column order ----------
+
+    // Put the cells of one row in the current column order.
+    function orderRow(tr) {
+      if (tr.classList.contains('noresults')) { return; }
+      var cells = {};
+      var children = Array.prototype.slice.call(tr.children);
+      for (var i = 0; i < children.length; i++) {
+        var key = cellKey(children[i]);
+        if (!key) { return; }   // unknown layout: leave this row alone
+        cells[key] = children[i];
+      }
+      cols.forEach(function (c) {
+        if (cells[c.key]) { tr.appendChild(cells[c.key]); }
+      });
+    }
+
+    function applyOrder() {
+      cols.forEach(function (c) {
+        colgroup.appendChild(c.col);
+        head.appendChild(c.th);
+      });
+      qsa('tbody#spots tr', table).forEach(orderRow);
+    }
+
+    // Restore the saved order; columns that are not in it keep their relative position.
+    (function restoreOrder() {
+      var saved = loadJson(ORDER_KEY, []);
+      if (!saved.length) { return; }
+      var rank = {};
+      saved.forEach(function (k, i) { rank[k] = i; });
+      var indexed = cols.map(function (c, i) { return { c: c, i: i }; });
+      indexed.sort(function (a, b) {
+        var ra = (a.c.key in rank) ? rank[a.c.key] : 1000 + a.i;
+        var rb = (b.c.key in rank) ? rank[b.c.key] : 1000 + b.i;
+        return ra - rb;
+      });
+      cols = indexed.map(function (x) { return x.c; });
+      applyOrder();
+    })();
+
+    // Rows added later (infinite scroll / "Load more") follow the same order.
+    var tbody = qs('tbody#spots', table);
+    if (tbody && window.MutationObserver) {
+      new MutationObserver(function (records) {
+        records.forEach(function (r) {
+          Array.prototype.forEach.call(r.addedNodes, function (n) {
+            if (n.nodeType === 1 && n.tagName === 'TR') { orderRow(n); }
+          });
+        });
+      }).observe(tbody, { childList: true });
+    }
+
+    function moveColumn(fromKey, toKey, after) {
+      var from = null;
+      cols.forEach(function (c) { if (c.key === fromKey) { from = c; } });
+      if (!from || fromKey === toKey) { return; }
+      cols = cols.filter(function (c) { return c !== from; });
+      var at = 0;
+      cols.forEach(function (c, i) { if (c.key === toKey) { at = i + (after ? 1 : 0); } });
+      cols.splice(at, 0, from);
+      applyOrder();
+      saveJson(ORDER_KEY, cols.map(function (c) { return c.key; }));
+    }
+
+    var dragKey = null;
+
+    function clearDropMarks() {
+      cols.forEach(function (c) { c.th.classList.remove('col-drop-before', 'col-drop-after'); });
+    }
+
+    // ---------- headers: drag to reorder, handle to resize ----------
+
+    function nextFixed(c) {
+      for (var j = cols.indexOf(c) + 1; j < cols.length; j++) {
+        if (cols[j].key && cols[j].key !== FLEX_CLASS) { return cols[j]; }
+      }
+      return null;
+    }
+
+    cols.forEach(function (c) {
+      if (!c.key) { return; }
+
+      c.th.draggable = true;
+      qsa('a', c.th).forEach(function (a) { a.draggable = false; });
+
+      c.th.addEventListener('dragstart', function (e) {
+        dragKey = c.key;
+        c.th.classList.add('col-dragging');
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = 'move';
+          try { e.dataTransfer.setData('text/plain', c.key); } catch (err) { /* IE */ }
+        }
+      });
+      c.th.addEventListener('dragend', function () {
+        dragKey = null;
+        c.th.classList.remove('col-dragging');
+        clearDropMarks();
+      });
+      c.th.addEventListener('dragover', function (e) {
+        if (!dragKey || dragKey === c.key) { return; }
+        e.preventDefault();
+        var r = c.th.getBoundingClientRect();
+        var after = e.clientX > r.left + r.width / 2;
+        clearDropMarks();
+        c.th.classList.add(after ? 'col-drop-after' : 'col-drop-before');
+      });
+      c.th.addEventListener('dragleave', function () {
+        c.th.classList.remove('col-drop-before', 'col-drop-after');
+      });
+      c.th.addEventListener('drop', function (e) {
+        if (!dragKey) { return; }
+        e.preventDefault();
+        var r = c.th.getBoundingClientRect();
+        var after = e.clientX > r.left + r.width / 2;
+        clearDropMarks();
+        moveColumn(dragKey, c.key, after);
+        dragKey = null;
+      });
+
+      // The resize handle: the title can only be resized by moving the border with its neighbour.
       var handle = document.createElement('span');
       handle.className = 'col-resizer';
       handle.title = 'Drag to resize, double-click to reset';
+      handle.draggable = false;
       c.th.appendChild(handle);
+
+      // A drag that starts on the handle must resize, not move the column.
+      handle.addEventListener('mouseenter', function () { c.th.draggable = false; });
+      handle.addEventListener('mouseleave', function () { c.th.draggable = true; });
 
       handle.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); });
 
       handle.addEventListener('dblclick', function (e) {
         e.preventDefault(); e.stopPropagation();
-        var target = (c.cls === FLEX_CLASS) ? nextFixed(i) : c;
+        var target = (c.key === FLEX_CLASS) ? nextFixed(c) : c;
         if (!target) { return; }
-        delete stored[target.cls];
-        target.col.style.width = DEFAULTS[target.cls] + 'px';
-        save(stored);
+        delete storedWidths[target.key];
+        target.col.style.width = DEFAULTS[target.key] + 'px';
+        saveJson(WIDTH_KEY, storedWidths);
       });
 
       handle.addEventListener('mousedown', function (e) {
         e.preventDefault(); e.stopPropagation();
-        var isFlex = (c.cls === FLEX_CLASS);
-        var target = isFlex ? nextFixed(i) : c;
+        var isFlex = (c.key === FLEX_CLASS);
+        var target = isFlex ? nextFixed(c) : c;
         if (!target) { return; }
 
         var startX = e.clientX;
         var startW = target.th.getBoundingClientRect().width;
-        var flexW = cols.filter(function (x) { return x.cls === FLEX_CLASS; })[0].th.getBoundingClientRect().width;
+        var flexW = cols.filter(function (x) { return x.key === FLEX_CLASS; })[0].th.getBoundingClientRect().width;
         document.body.classList.add('col-resizing');
 
         function move(ev) {
@@ -101,21 +228,13 @@
           document.removeEventListener('mousemove', move);
           document.removeEventListener('mouseup', up);
           document.body.classList.remove('col-resizing');
-          stored[target.cls] = Math.round(target.th.getBoundingClientRect().width);
-          save(stored);
+          storedWidths[target.key] = Math.round(target.th.getBoundingClientRect().width);
+          saveJson(WIDTH_KEY, storedWidths);
         }
         document.addEventListener('mousemove', move);
         document.addEventListener('mouseup', up);
       });
     });
-
-    // first resizable (non-title) column right of the title
-    function nextFixed(i) {
-      for (var j = i + 1; j < cols.length; j++) {
-        if (cols[j].cls && cols[j].cls !== FLEX_CLASS) { return cols[j]; }
-      }
-      return null;
-    }
   }
 
   if (document.readyState === 'loading') {

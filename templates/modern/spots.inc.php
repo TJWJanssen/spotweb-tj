@@ -8,7 +8,7 @@
 
         $retrieveUrl = $tplHelper->makeRetrieveUrl();
         if (!empty($retrieveUrl)) {
-            $retrieveUrlJson = json_encode($retrieveUrl, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+            $retrieveUrlJson = json_encode(html_entity_decode($retrieveUrl), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
             $retrieveLabelJson = json_encode(_('Retrieve'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
             echo '<script>
 document.addEventListener("DOMContentLoaded", function() {

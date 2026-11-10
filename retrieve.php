@@ -48,7 +48,23 @@ try {
          * the user with
          */
         $apiKey = $req->getDef('apikey', '');
-        $userSession = $svcUserAuth->verifyApi($apiKey);
+        if ($apiKey !== '') {
+            $userSession = $svcUserAuth->verifyApi($apiKey);
+        } else {
+            /*
+             * The admin account cannot use an API key, so we fall back to the
+             * session of the logged in user. As retrieving is triggered by a
+             * simple GET request, it additionally requires an XSRF token which
+             * is bound to this user (see SpotTemplateHelper::makeRetrieveUrl()).
+             */
+            $userSession = $svcUserAuth->useOrStartSession(false);
+            $req->setUserId($userSession['user']['userid']);
+
+            if (($userSession['user']['userid'] == $settings->get('nonauthenticated_userid'))
+                || (!SpotReq::isXsrfTokenValid($req->getDef('xsrfid', ''), 'retrievespots', 86400))) {
+                $userSession = false;
+            } // if
+        } // if
 
         /*
          * If the session failed or the the user doesn't have access
