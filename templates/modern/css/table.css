@@ -69,20 +69,59 @@ table.spots td.watch a.remove:hover::before {
   color: #f59e0b;
 }
 
-/* Poster column wider for longer names */
-table.spots td.poster,
-table.spots th.poster {
-  min-width: 135px;
-  width: 135px;
+/*
+ * Resizable fixed layout (see js/table-columns.js): the table always fits
+ * its container, the title column takes the remaining space and every
+ * cell truncates with an ellipsis instead of widening the table.
+ */
+table.spots.resizable { table-layout: fixed; width: 100%; }
+table.spots.resizable th,
+table.spots.resizable td {
+  min-width: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-table.spots td.poster a {
-  display: inline-block;
-  min-width: 135px;
-  width: 135px;
+table.spots.resizable th.title,
+table.spots.resizable td.title { width: auto; }
+table.spots.resizable td a,
+table.spots.resizable td span {
+  min-width: 0;
+  width: auto;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+table.spots.resizable td.category a { text-align: center; }
+
+/* Same text size as the menu items (12px) */
+table.spots.resizable td.title a,
+table.spots.resizable th { font-size: 12px; }
+table.spots.resizable td { font-size: 12px; }
+
+/* Column drag handle in the header */
+table.spots th { position: relative; }
+.col-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
+  z-index: 2;
+}
+.col-resizer::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  right: 3px;
+  width: 1px;
+  background: var(--color-border, rgba(148, 163, 184, 0.45));
+}
+.col-resizer:hover::after { background: var(--color-accent, #3b82f6); width: 2px; }
+body.col-resizing { cursor: col-resize; user-select: none; }
 
 /* Thumbnail inside the title cell */
 /* thumbnails disabled */
@@ -120,3 +159,47 @@ table.spots tr td span.filesize { color: inherit; }
 
 
 /* End poster width overrides */
+
+/*
+ * Weight: list text is normal, only newly retrieved spots are bold.
+ * A row counts as new when its title cell has the 'new' class.
+ */
+table.spots.resizable tbody tr td,
+table.spots.resizable tbody tr td a,
+table.spots.resizable tbody tr td span {
+  font-weight: 400;
+}
+table.spots.resizable tbody tr:has(td.new) td,
+table.spots.resizable tbody tr:has(td.new) td a,
+table.spots.resizable tbody tr:has(td.new) td span {
+  font-weight: 700;
+}
+
+/*
+ * Category badge: fill the whole column instead of a fixed-width sprite,
+ * so the colour lines up with the column width when it is resized.
+ */
+table.spots.resizable tr td.category { padding: 0 2px 0 0; }
+table.spots.resizable tr td.category a {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 20px;
+  line-height: 18px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+  background-image: none;
+}
+table.spots.resizable tr.spotcat0 td.category a { background: linear-gradient(#51b3eb, #229de4 50%, #31a4e6); border-color: #006cab; }
+table.spots.resizable tr.spotcat1 td.category a { background: linear-gradient(#fbc75c, #f2b232 50%, #eeb441); border-color: #ab7200; }
+table.spots.resizable tr.spotcat2 td.category a { background: linear-gradient(#51ec51, #22e422 50%, #31e531); border-color: #00ab00; }
+table.spots.resizable tr.spotcat3 td.category a { background: linear-gradient(#ec6b51, #e44222 50%, #e55031); border-color: #ab1c00; }
+table.spots.resizable tr.spotcat4 td.category a { background: linear-gradient(#b983f5, #9a4fe0 50%, #a35fe4); border-color: #6b2fb0; }
+table.spots.resizable tr:hover.spotcat0 td.category a { background: rgba(34, 157, 228, 0.25); color: #51b3eb; }
+table.spots.resizable tr:hover.spotcat1 td.category a { background: rgba(242, 178, 50, 0.25); color: #fbc75c; }
+table.spots.resizable tr:hover.spotcat2 td.category a { background: rgba(34, 228, 34, 0.25); color: #51ec51; }
+table.spots.resizable tr:hover.spotcat3 td.category a { background: rgba(228, 66, 34, 0.25); color: #ec6b51; }
+table.spots.resizable tr:hover.spotcat4 td.category a { background: rgba(154, 79, 224, 0.25); color: #b983f5; }

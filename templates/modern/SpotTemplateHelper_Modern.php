@@ -35,6 +35,7 @@ class SpotTemplateHelper_Modern extends SpotTemplateHelper
             $this->getThemeAssetPath('js/sticky-offset.js'),
             $this->getThemeAssetPath('js/infinite.js'),
             $this->getThemeAssetPath('js/table-enhance.js'),
+            $this->getThemeAssetPath('js/table-columns.js'),
             $this->getThemeAssetPath('js/filter-overlay.js'),
         ];
     }
