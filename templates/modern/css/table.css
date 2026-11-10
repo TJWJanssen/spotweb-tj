@@ -203,3 +203,9 @@ table.spots.resizable tr:hover.spotcat1 td.category a { background: rgba(242, 17
 table.spots.resizable tr:hover.spotcat2 td.category a { background: rgba(34, 228, 34, 0.25); color: #51ec51; }
 table.spots.resizable tr:hover.spotcat3 td.category a { background: rgba(228, 66, 34, 0.25); color: #ec6b51; }
 table.spots.resizable tr:hover.spotcat4 td.category a { background: rgba(154, 79, 224, 0.25); color: #b983f5; }
+
+/* Reordering columns by dragging the headers */
+table.spots.resizable th[draggable="true"] { cursor: grab; }
+table.spots.resizable th.col-dragging { opacity: 0.45; }
+table.spots.resizable th.col-drop-before { box-shadow: inset 3px 0 0 var(--color-accent, #3b82f6); }
+table.spots.resizable th.col-drop-after { box-shadow: inset -3px 0 0 var(--color-accent, #3b82f6); }

@@ -9,20 +9,27 @@
     SpotTiming::start('tpl:spotsinc-afterinclude');
 
     // We definieeren hier een aantal settings zodat we niet steeds dezelfde check hoeven uit te voeren
-    $show_watchlist_button = ($currentSession['user']['prefs']['keep_watchlist'] && $tplHelper->allowed(SpotSecurity::spotsec_keep_own_watchlist, ''));
-    $show_comments = ($settings->get('retrieve_comments') && $tplHelper->allowed(SpotSecurity::spotsec_view_comments, ''));
+    // Columns the user switched on (all on when the preference is not set yet)
+    $listColumnPrefs = $currentSession['user']['prefs']['list_columns'] ?? [];
+    $showCol = [];
+    foreach (Services_User_Util::listColumnKeys() as $listColumnKey) {
+        $showCol[$listColumnKey] = !isset($listColumnPrefs[$listColumnKey]) || $listColumnPrefs[$listColumnKey];
+    } // foreach
+
+    $show_watchlist_button = ($currentSession['user']['prefs']['keep_watchlist'] && $tplHelper->allowed(SpotSecurity::spotsec_keep_own_watchlist, '') && $showCol['watch']);
+    $show_comments = ($settings->get('retrieve_comments') && $tplHelper->allowed(SpotSecurity::spotsec_view_comments, '') && $showCol['comments']);
     $show_filesize = $currentSession['user']['prefs']['show_filesize'];
     $show_spamreports = $currentSession['user']['prefs']['show_reportcount'];
     $minimum_spamreports = $currentSession['user']['prefs']['minimum_reportcount'];
     $show_nzb_button = ($tplHelper->allowed(SpotSecurity::spotsec_retrieve_nzb, '') && ($currentSession['user']['prefs']['show_nzbbutton']));
     $show_multinzb_checkbox = ($tplHelper->allowed(SpotSecurity::spotsec_retrieve_nzb, '') && ($currentSession['user']['prefs']['show_multinzb']));
-    $show_nzbhandler_button = $tplHelper->allowed(SpotSecurity::spotsec_retrieve_nzb, '');
+    $show_nzbhandler_button = ($tplHelper->allowed(SpotSecurity::spotsec_retrieve_nzb, '') && $showCol['nzbhandler']);
     $show_mouseover_subcats = ($currentSession['user']['prefs']['mouseover_subcats']);
     $nzbHandlerPrefsUrl = $tplHelper->makeEditUserPrefsUrl($currentSession['user']['userid']);
     $configureNzbHandlerTitle = htmlspecialchars(_('Configure NZB handling before sending this spot to a download client'), ENT_QUOTES);
     $newCommentCount = [];
     $noResults = (count($spots) == 0);
-    $show_editspot_button = ($tplHelper->allowed(SpotSecurity::spotsec_view_spotdetail, '') && $tplHelper->allowed(SpotSecurity::spotsec_edit_spotdetail, ''));
+    $show_editspot_button = ($tplHelper->allowed(SpotSecurity::spotsec_view_spotdetail, '') && $tplHelper->allowed(SpotSecurity::spotsec_edit_spotdetail, '') && $showCol['editspot']);
 
     /*
      * For Seen, Watched en MyPosted-spots we want to show a list of
@@ -39,7 +46,9 @@
 				<table class="spots" summary="Spots">
 					<thead>
 						<tr class="head">
+<?php if ($showCol['category']) { ?>
 							<th class='category'> <a href="<?php echo $tplHelper->makeSortUrl('index', 'category', ''); ?>" title="<?php echo _('Sort on category'); ?>"><?php echo _('Cat.'); ?></a> </th> 
+<?php } ?>
 							<th class='title'> <span class="sortby"><a class="up" href="<?php echo $tplHelper->makeSortUrl('index', 'title', 'ASC'); ?>" title="<?php echo _('Sort on title [0-Z]'); ?>"> </a> <a class="down" href="<?php echo $tplHelper->makeSortUrl('index', 'title', 'DESC'); ?>" title="<?php echo _('Sort on title [Z-0]'); ?>"> </a></span> <?php echo _('Title'); ?> </th> 
 							<?php if ($show_editspot_button) { ?>
 							<th class='editspot'> </th>
@@ -50,9 +59,15 @@
                             if ($show_comments) {
                                 echo "<th class='comments'> <a title='"._('Number of comments')."' href='".$tplHelper->makeToggleSortUrl('index', 'commentcount', 'DESC')."'>#</a> </th>";
                             } // if?>
+<?php if ($showCol['genre']) { ?>
 							<th class='genre'> <?php echo _('Genre'); ?> </th> 
+<?php } ?>
+<?php if ($showCol['poster']) { ?>
 							<th class='poster'> <span class="sortby"><a class="up" href="<?php echo $tplHelper->makeSortUrl('index', 'poster', 'ASC'); ?>" title="<?php echo _('Sort on sender [0-Z]'); ?>"> </a> <a class="down" href="<?php echo $tplHelper->makeSortUrl('index', 'poster', 'DESC'); ?>" title="<?php echo _('Sort on sender [Z-0]'); ?>"> </a></span> <?php echo _('Sender'); ?> </th> 
+<?php } ?>
+<?php if ($showCol['date']) { ?>
 							<th class='date'> <span class="sortby"><a class="up" href="<?php echo $tplHelper->makeSortUrl('index', 'stamp', 'DESC'); ?>" title="<?php echo _('Sort on age [ascending]'); ?>"> </a> <a class="down" href="<?php echo $tplHelper->makeSortUrl('index', 'stamp', 'ASC'); ?>" title="<?php echo _('Sort on age [descending]'); ?>"> </a></span> <?php echo ($currentSession['user']['prefs']['date_formatting'] == 'human') ? _('Age') : _('Date'); ?> </th> 
+<?php } ?>
 <?php if ($show_filesize) { ?>
 							<th class='filesize'> <span class="sortby"><a class="up" href="<?php echo $tplHelper->makeSortUrl('index', 'filesize', 'DESC'); ?>" title="<?php echo _('Sort on size [descending]'); ?>"> </a> <a class="down" href="<?php echo $tplHelper->makeSortUrl('index', 'filesize', 'ASC'); ?>" title="<?php echo _('Sort on size [ascending]'); ?>"> </a></span> <?php echo _('Size'); ?> </th> 
 <?php } ?>
@@ -79,7 +94,7 @@ if ($show_nzbhandler_button) { ?>
 					<tbody id="spots">
 <?php
     if ($noResults) {
-        $colSpan = 5;
+        $colSpan = 1 + (int) $showCol['category'] + (int) $showCol['genre'] + (int) $showCol['poster'] + (int) $showCol['date'];
         $nzbHandlingTmp = $currentSession['user']['prefs']['nzbhandling'];
         if ($show_comments) {
             $colSpan++;
@@ -184,7 +199,7 @@ if ($show_nzbhandler_button) { ?>
         echo "'>";
 
         if ($settings->get('highlight') > 0 and $spot['commentcount'] >= $settings->get('highcount')) {
-            echo "<td class='category'><a href='".$spot['caturl']."' title=\"".sprintf(_("Go to category '%s'"), $spot['catshortdesc']).'">'.$spot['catshortdesc'].'</a></td>'.
+            echo ($showCol['category'] ? "<td class='category'><a href='".$spot['caturl']."' title=\"".sprintf(_("Go to category '%s'"), $spot['catshortdesc']).'">'.$spot['catshortdesc'].'</a></td>' : '').
         "<td class='title ".'hg1'.' '.$newSpotClass.' '.$tipTipClass."'><a data-cats='".$catData."' onclick='openSpot(this,\"".$spot['spoturl']."\")' href='".$spot['spoturl']."' title='".$spot['title']."' class='spotlink'>".$reportSpam.$rating.$markSpot.$spot['title'].'</a></td>';
 
             if ($show_editspot_button) {
@@ -219,9 +234,15 @@ if ($show_nzbhandler_button) { ?>
             if ($spot['idtype'] == 1) {
                 $markSpot = '<span class="markSpot">B</span>';
             }
-            echo "<td class='genre ".'hg1'."'><a href='".$spot['subcaturl']."' title='".sprintf(_('Search spot in category %s'), $spot['catdesc'])."'>".$spot['catdesc'].'</a></td>'.
-             "<td class='poster ".'hg1'."'><a href='".$spot['posterurl']."' title='".sprintf(_('Search spot from %s'), $spot['poster'])."'>".$markSpot.$spot['poster'].'</a></td>'.
-             "<td class='date ".'hg1'."' title='".$dateTitleText."'>".$tplHelper->formatDate($spot['stamp'], 'spotlist').'</td>';
+            $listCells = [];
+            $listCells['genre'] = "<td class='genre ".'hg1'."'><a href='".$spot['subcaturl']."' title='".sprintf(_('Search spot in category %s'), $spot['catdesc'])."'>".$spot['catdesc'].'</a></td>';
+            $listCells['poster'] = "<td class='poster ".'hg1'."'><a href='".$spot['posterurl']."' title='".sprintf(_('Search spot from %s'), $spot['poster'])."'>".$markSpot.$spot['poster'].'</a></td>';
+            $listCells['date'] = "<td class='date ".'hg1'."' title='".$dateTitleText."'>".$tplHelper->formatDate($spot['stamp'], 'spotlist').'</td>';
+            foreach (['genre', 'poster', 'date'] as $listCellKey) {
+                if ($showCol[$listCellKey]) {
+                    echo $listCells[$listCellKey];
+                } // if
+            } // foreach
 
             if ($show_filesize) {
                 echo "<td class='filesize ".'hg1'."'>".$tplHelper->format_size($spot['filesize']).'</td>';
@@ -278,7 +299,7 @@ if ($show_nzbhandler_button) { ?>
                 } // if
             } // else
         } else {
-            echo "<td class='category'><a href='".$spot['caturl']."' title=\"".sprintf(_("Go to category '%s'"), $spot['catshortdesc']).'">'.$spot['catshortdesc'].'</a></td>'.
+            echo ($showCol['category'] ? "<td class='category'><a href='".$spot['caturl']."' title=\"".sprintf(_("Go to category '%s'"), $spot['catshortdesc']).'">'.$spot['catshortdesc'].'</a></td>' : '').
         "<td class='title ".$newSpotClass.' '.$tipTipClass."'><a data-cats='".$catData."' onclick='openSpot(this,\"".$spot['spoturl']."\")' href='".$spot['spoturl']."' title='".$spot['title']."' class='spotlink'>".$reportSpam.$rating.$markSpot.$spot['title'].'</a></td>';
 
             if ($show_editspot_button) {
@@ -313,9 +334,15 @@ if ($show_nzbhandler_button) { ?>
             if ($spot['idtype'] == 1) {
                 $markSpot = '<span class="markSpot">B</span>';
             }
-            echo "<td class='genre'><a href='".$spot['subcaturl']."' title='".sprintf(_('Search spot in category %s'), $spot['catdesc'])."'>".$spot['catdesc'].'</a></td>'.
-             "<td class='poster'><a href='".$spot['posterurl']."' title='".sprintf(_('Search spot from %s'), $spot['poster'])."'>".$markSpot.$spot['poster'].'</a></td>'.
-             "<td class='date' title='".$dateTitleText."'>".$tplHelper->formatDate($spot['stamp'], 'spotlist').'</td>';
+            $listCells = [];
+            $listCells['genre'] = "<td class='genre'><a href='".$spot['subcaturl']."' title='".sprintf(_('Search spot in category %s'), $spot['catdesc'])."'>".$spot['catdesc'].'</a></td>';
+            $listCells['poster'] = "<td class='poster'><a href='".$spot['posterurl']."' title='".sprintf(_('Search spot from %s'), $spot['poster'])."'>".$markSpot.$spot['poster'].'</a></td>';
+            $listCells['date'] = "<td class='date' title='".$dateTitleText."'>".$tplHelper->formatDate($spot['stamp'], 'spotlist').'</td>';
+            foreach (['genre', 'poster', 'date'] as $listCellKey) {
+                if ($showCol[$listCellKey]) {
+                    echo $listCells[$listCellKey];
+                } // if
+            } // foreach
 
             if ($show_filesize) {
                 echo "<td class='filesize'>".$tplHelper->format_size($spot['filesize']).'</td>';

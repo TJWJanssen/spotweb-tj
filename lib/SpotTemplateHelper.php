@@ -526,7 +526,13 @@ class SpotTemplateHelper
             return '';
         } // if
 
-        return $this->makeBaseUrl('full').'retrieve.php?output=xml'.$this->makeApiRequestString();
+        $apiRequest = $this->makeApiRequestString();
+        if ($apiRequest === '') {
+            // No API key available (the admin account), retrieve.php then uses the session plus an XSRF token
+            $apiRequest = '&amp;xsrfid='.urlencode($this->generateXsrfCookie('retrievespots'));
+        } // if
+
+        return $this->makeBaseUrl('full').'retrieve.php?output=xml'.$apiRequest;
     }
 
     // makeRetrieveUrl

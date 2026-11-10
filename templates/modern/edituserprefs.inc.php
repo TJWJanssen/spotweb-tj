@@ -46,6 +46,7 @@ if (!$dialogembedded) { ?>
 	<div id="edituserpreferencetabs" class="ui-tabs">
 		<ul>
 			<li><a href="#edituserpreftab-1"><span><?php echo _('General'); ?></span></a></li>
+			<li><a href="#edituserpreftab-7"><span><?php echo _('List columns'); ?></span></a></li>
 <?php if ($tplHelper->allowed(SpotSecurity::spotsec_download_integration, '')) { ?>
 			<li><a href="#edituserpreftab-2"><span><?php echo _('NZB handling'); ?></span></a></li>
 <?php } ?>
@@ -207,11 +208,6 @@ if (!$dialogembedded) { ?>
 } ?>></dd>
 <?php } ?>
 
-					<dt><label for="edituserprefsform[show_filesize]"><?php echo _('Show filesize in spotoverview?'); ?></label></dt>
-					<dd><input type="checkbox" name="edituserprefsform[show_filesize]" <?php if ($edituserprefsform['show_filesize']) {
-    echo 'checked="checked"';
-} ?>></dd>
-
 					<dt><label for="edituserprefsform[show_reportcount]"><?php echo _('Show number of spamreports in spotoverview?'); ?></label></dt>
 					<dd><input type="checkbox" name="edituserprefsform[show_reportcount]" <?php if ($edituserprefsform['show_reportcount']) {
     echo 'checked="checked"';
@@ -253,18 +249,6 @@ if (!$dialogembedded) { ?>
 						</select>
 					</dd>					
 					
-<?php if ($tplHelper->allowed(SpotSecurity::spotsec_retrieve_nzb, '')) { ?>
-					<dt><label for="edituserprefsform[show_nzbbutton]"><?php echo _('Show NZB button to download file with this browser?'); ?></label></dt>
-					<dd><input type="checkbox" name="edituserprefsform[show_nzbbutton]" <?php if ($edituserprefsform['show_nzbbutton']) {
-    echo 'checked="checked"';
-} ?>></dd>
-
-					<dt><label for="edituserprefsform[show_multinzb]"><?php echo _('Show a checkbox next to each spot for multiplex NZB file download?'); ?></label></dt>
-					<dd><input type="checkbox" name="edituserprefsform[show_multinzb]" <?php if ($edituserprefsform['show_multinzb']) {
-    echo 'checked="checked"';
-} ?>></dd>
-<?php } ?>
-
 <?php if ($tplHelper->allowed(SpotSecurity::spotsec_keep_own_filters, '')) { ?>
 					<dt><label for="edituserprefsform[_dummy_prevent_porn]"><?php echo _('Hide erotic spots in index?'); ?></label></dt>
 					<dd><input type="checkbox" name="edituserprefsform[_dummy_prevent_porn]" <?php $tmpIndexFilter = $tplHelper->getIndexFilter(); if (stripos($tmpIndexFilter['tree'], '~cat0_z3') !== false) {
@@ -300,6 +284,78 @@ if (!$dialogembedded) { ?>
 		</div>
 
 		
+<!-- Spot list columns -->
+		<div id="edituserpreftab-7" class="ui-tabs-hide">
+			<fieldset>
+				<p><?php echo _('Choose which columns are shown in the spot list. The title is always shown.'); ?></p>
+				<input type="hidden" name="edituserprefsform[list_columns][_present]" value="1">
+				<dl>
+<?php $listColumns = (isset($edituserprefsform['list_columns']) && is_array($edituserprefsform['list_columns'])) ? $edituserprefsform['list_columns'] : []; ?>
+					<dt><label for="edituserprefsform[list_columns][category]"><?php echo _('Category'); ?></label></dt>
+					<dd><input type="checkbox" name="edituserprefsform[list_columns][category]" <?php if (!isset($listColumns['category']) || $listColumns['category']) {
+    echo 'checked="checked"';
+} ?>></dd>
+
+					<dt><label for="edituserprefsform[list_columns][editspot]"><?php echo _('Edit spot'); ?></label></dt>
+					<dd><input type="checkbox" name="edituserprefsform[list_columns][editspot]" <?php if (!isset($listColumns['editspot']) || $listColumns['editspot']) {
+    echo 'checked="checked"';
+} ?>></dd>
+
+					<dt><label for="edituserprefsform[list_columns][watch]"><?php echo _('Position in watchlist'); ?></label></dt>
+					<dd><input type="checkbox" name="edituserprefsform[list_columns][watch]" <?php if (!isset($listColumns['watch']) || $listColumns['watch']) {
+    echo 'checked="checked"';
+} ?>></dd>
+
+					<dt><label for="edituserprefsform[list_columns][comments]"><?php echo _('# (number of comments)'); ?></label></dt>
+					<dd><input type="checkbox" name="edituserprefsform[list_columns][comments]" <?php if (!isset($listColumns['comments']) || $listColumns['comments']) {
+    echo 'checked="checked"';
+} ?>></dd>
+
+					<dt><label for="edituserprefsform[list_columns][genre]"><?php echo _('Genre'); ?></label></dt>
+					<dd><input type="checkbox" name="edituserprefsform[list_columns][genre]" <?php if (!isset($listColumns['genre']) || $listColumns['genre']) {
+    echo 'checked="checked"';
+} ?>></dd>
+
+					<dt><label for="edituserprefsform[list_columns][poster]"><?php echo _('Sender'); ?></label></dt>
+					<dd><input type="checkbox" name="edituserprefsform[list_columns][poster]" <?php if (!isset($listColumns['poster']) || $listColumns['poster']) {
+    echo 'checked="checked"';
+} ?>></dd>
+
+					<dt><label for="edituserprefsform[list_columns][date]"><?php echo _('Date / age'); ?></label></dt>
+					<dd><input type="checkbox" name="edituserprefsform[list_columns][date]" <?php if (!isset($listColumns['date']) || $listColumns['date']) {
+    echo 'checked="checked"';
+} ?>></dd>
+
+					<dt><label for="edituserprefsform[show_filesize]"><?php echo _('Size'); ?></label></dt>
+					<dd><input type="checkbox" name="edituserprefsform[show_filesize]" <?php if ($edituserprefsform['show_filesize']) {
+    echo 'checked="checked"';
+} ?>></dd>
+
+<?php if ($tplHelper->allowed(SpotSecurity::spotsec_retrieve_nzb, '')) { ?>
+					<dt><label for="edituserprefsform[show_nzbbutton]"><?php echo _('NZB button (download with this browser)'); ?></label></dt>
+					<dd><input type="checkbox" name="edituserprefsform[show_nzbbutton]" <?php if ($edituserprefsform['show_nzbbutton']) {
+    echo 'checked="checked"';
+} ?>></dd>
+
+					<dt><label for="edituserprefsform[show_multinzb]"><?php echo _('Checkbox for multiplex NZB download'); ?></label></dt>
+					<dd><input type="checkbox" name="edituserprefsform[show_multinzb]" <?php if ($edituserprefsform['show_multinzb']) {
+    echo 'checked="checked"';
+} ?>></dd>
+<?php } ?>
+
+					<dt><label for="edituserprefsform[list_columns][nzbhandler]"><?php echo _('Download client button'); ?></label></dt>
+					<dd><input type="checkbox" name="edituserprefsform[list_columns][nzbhandler]" <?php if (!isset($listColumns['nzbhandler']) || $listColumns['nzbhandler']) {
+    echo 'checked="checked"';
+} ?>></dd>
+				</dl>
+				<p>
+					<?php echo _('Drag a column header in the spot list to change the order, or drag the edge of a header to change its width.'); ?>
+					<a href="#" class="greyButton" onclick="try { localStorage.removeItem('spotweb_table_order'); localStorage.removeItem('spotweb_table_cols'); } catch (e) {} this.textContent = '<?php echo htmlspecialchars(_('Column order and widths have been reset'), ENT_QUOTES); ?>'; return false;"><?php echo _('Reset column order and widths'); ?></a>
+				</p>
+			</fieldset>
+		</div>
+<!-- End spot list columns -->
+
 <?php if ($tplHelper->allowed(SpotSecurity::spotsec_download_integration, '')) { ?>
 		<div id="edituserpreftab-2" class="ui-tabs-hide">
 			<fieldset>

@@ -15,6 +15,17 @@ class Services_User_Util
     // passToHash
 
     /*
+     * Keys of the spot list columns a user can switch on or off
+     * (user preference 'list_columns'). The title column is always shown.
+     */
+    public static function listColumnKeys()
+    {
+        return ['category', 'editspot', 'watch', 'comments', 'genre', 'poster', 'date', 'nzbhandler'];
+    }
+
+    // listColumnKeys
+
+    /*
      * Creates a password hash using the current PHP default algorithm
      * (bcrypt at the moment). The salt is part of the returned string.
      */

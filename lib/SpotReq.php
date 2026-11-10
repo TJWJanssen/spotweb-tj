@@ -97,16 +97,28 @@ class SpotReq
             return false;
         } // if
 
+        return self::isXsrfTokenValid($_POST[$form]['xsrfid'], $form);
+    }
+
+    // isXsrfValid
+
+    /*
+     * Validates an XSRF token (see generateXsrfCookie()) for the given action and the
+     * current user. By default a token is valid for 30 minutes, $maxAge can be used
+     * for actions which are triggered from a page that stays open longer.
+     */
+    public static function isXsrfTokenValid($token, $form, $maxAge = 1800)
+    {
         // Explode the different values, if we don't agree
         // on the amount of values, exit immediately
-        $xsrfVals = explode(':', $_POST[$form]['xsrfid']);
+        $xsrfVals = explode(':', (string) $token);
 
         if (count($xsrfVals) != 4) {
             return false;
         } // if
 
-        // start validating, an XSRF cookie is only valid for 30 minutes
-        if ((time() - 1800) > $xsrfVals[0]) {
+        // start validating, a token is only valid for a limited time
+        if ((time() - $maxAge) > $xsrfVals[0]) {
             return false;
         } // if
 
@@ -128,7 +140,7 @@ class SpotReq
         return true;
     }
 
-    // isXsrfValid
+    // isXsrfTokenValid
 
     public static function generateXsrfCookie($action)
     {

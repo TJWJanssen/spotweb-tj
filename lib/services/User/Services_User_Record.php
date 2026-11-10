@@ -277,6 +277,14 @@ class Services_User_Record
         $anonSkel['show_avatars'] = (isset($prefs['show_avatars'])) ? true : false;
         $anonSkel['tmdb_api_key'] = $anonSkel['tmdb_api_key'] ?? '';
 
+        // Spot list columns: a deselected checkbox is not submitted, so every column is set explicitly
+        if (isset($prefs['list_columns']) && is_array($prefs['list_columns'])) {
+            foreach (Services_User_Util::listColumnKeys() as $listColumn) {
+                $anonSkel['list_columns'][$listColumn] = isset($prefs['list_columns'][$listColumn]);
+            } // foreach
+            unset($prefs['list_columns']);
+        } // if
+
         $notifProviders = Notifications_Factory::getActiveServices();
         foreach ($notifProviders as $notifProvider) {
             $anonSkel['notifications'][$notifProvider]['enabled'] = (isset($prefs['notifications'][$notifProvider]['enabled'])) ? true : false;
