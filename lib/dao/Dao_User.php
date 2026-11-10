@@ -26,6 +26,8 @@ interface Dao_User
 
     public function authUser($username, $passhash);
 
+    public function getUserPasshash($username);
+
     public function setUserAvatar($userId, $imageEncoded);
 
     public function getGroupPerms($groupId);

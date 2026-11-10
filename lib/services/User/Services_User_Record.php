@@ -31,7 +31,7 @@ class Services_User_Record
         /*
          * Create a random password for this user
          */
-        $spotUser['newpassword1'] = substr(Services_User_Util::generateUniqueId(), 1, 9);
+        $spotUser['newpassword1'] = substr(Services_User_Util::generateUniqueId(), 1, 12);
         $spotUser['newpassword2'] = $spotUser['newpassword1'];
 
         /*
@@ -150,10 +150,10 @@ class Services_User_Record
         } // if
 
         // Convert the password to an passhash
-        $user['passhash'] = Services_User_Util::passToHash($this->_settings->get('pass_salt'), $user['newpassword1']);
+        $user['passhash'] = Services_User_Util::hashPassword($user['newpassword1']);
 
         // Create an API key
-        $user['apikey'] = md5(Services_User_Util::generateUniqueId());
+        $user['apikey'] = bin2hex(random_bytes(16));
 
         // and actually add the user to the database
         $tmpUser = $this->_userDao->addUser($user);
@@ -195,7 +195,7 @@ class Services_User_Record
     public function setUserPassword($userarr)
     {
         // Convert the password to an passhash
-        $userarr['passhash'] = Services_User_Util::passToHash($this->_settings->get('pass_salt'), $userarr['newpassword1']);
+        $userarr['passhash'] = Services_User_Util::hashPassword($userarr['newpassword1']);
 
         $this->_userDao->setUserPassword($userarr);
     }
@@ -207,7 +207,7 @@ class Services_User_Record
      */
     public function resetUserApi($user)
     {
-        $user['apikey'] = md5(Services_User_Util::generateUniqueId());
+        $user['apikey'] = bin2hex(random_bytes(16));
 
         $this->_userDao->setUser($user);
 
