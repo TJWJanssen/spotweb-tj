@@ -1,0 +1,12 @@
+.git
+.github
+.gitattributes
+.phpunit.result.cache
+.rnd
+tests
+docs
+dbsettings.inc.php
+ownsettings.php
+.env
+*.log
+nbproject
