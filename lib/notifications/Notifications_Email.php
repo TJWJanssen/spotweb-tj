@@ -39,7 +39,12 @@ class Notifications_Email extends Notifications_abs
                 $mail->CharSet = PHPMailer::CHARSET_UTF8;
                 $mail->Encoding = PHPMailer::ENCODING_BASE64;
                 $mail->Priority = 1;
-                $mail->SMTPOptions = ['ssl' => ['verify_peer_name'  => false]];
+                // Verify the server certificate by default; set 'verify_ssl' => false in the smtp setting to opt out
+                $verifySsl = !isset($smtp['verify_ssl']) || ($smtp['verify_ssl'] !== false);
+                $mail->SMTPOptions = ['ssl' => [
+                    'verify_peer'      => $verifySsl,
+                    'verify_peer_name' => $verifySsl,
+                ]];
                 $mail->WordWrap = 78;
                 $mail->XMailer = null;
                 $mail->Host = $smtp['host'];

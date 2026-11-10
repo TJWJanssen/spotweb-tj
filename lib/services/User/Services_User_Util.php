@@ -15,17 +15,60 @@ class Services_User_Util
     // passToHash
 
     /*
-     * Generates an unique id, mostly used for sessions
+     * Creates a password hash using the current PHP default algorithm
+     * (bcrypt at the moment). The salt is part of the returned string.
+     */
+    public static function hashPassword($password)
+    {
+        return password_hash($password, PASSWORD_DEFAULT);
+    }
+
+    // hashPassword
+
+    /*
+     * Is the stored hash a legacy (salted sha1) hash?
+     */
+    private static function isLegacyHash($storedHash)
+    {
+        return strlen($storedHash) == 40 && ctype_xdigit($storedHash);
+    }
+
+    /*
+     * Verifies a password against a stored hash. Supports both
+     * the modern password_hash() format and the legacy salted sha1.
+     */
+    public static function verifyPassword($salt, $password, $storedHash)
+    {
+        if (!is_string($storedHash) || $storedHash === '') {
+            return false;
+        } // if
+
+        if (self::isLegacyHash($storedHash)) {
+            return hash_equals(strtolower($storedHash), self::passToHash($salt, $password));
+        } // if
+
+        return password_verify($password, $storedHash);
+    }
+
+    // verifyPassword
+
+    /*
+     * Should this stored hash be replaced by a new one after a successful login?
+     */
+    public static function passwordNeedsRehash($storedHash)
+    {
+        return self::isLegacyHash($storedHash) || password_needs_rehash($storedHash, PASSWORD_DEFAULT);
+    }
+
+    // passwordNeedsRehash
+
+    /*
+     * Generates an unique id (hex), used for sessions, salts and the like.
+     * Uses a cryptographically secure random source.
      */
     public static function generateUniqueId()
     {
-        $sessionId = '';
-
-        for ($i = 0; $i < 10; $i++) {
-            $sessionId .= base_convert(mt_rand(), 10, 36);
-        } // for
-
-        return $sessionId;
+        return bin2hex(random_bytes(24));
     }
 
     // generateUniqueId

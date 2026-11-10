@@ -183,11 +183,21 @@ class Services_User_Authentication
      */
     public function authenticate($user, $password)
     {
-        // Sals the password with the unique salt given in the database
-        $password = Services_User_Util::passToHash($this->_settings->get('pass_salt'), $password);
+        // retrieve the stored hash and verify the password against it
+        $stored = $this->_userDao->getUserPasshash($user);
+        $userId = false;
+        if (($stored !== false) && Services_User_Util::verifyPassword($this->_settings->get('pass_salt'), $password, $stored['passhash'])) {
+            $userId = $stored['id'];
 
-        // authenticate the user
-        $userId = $this->_userDao->authUser($user, $password);
+            // transparently upgrade legacy (sha1) hashes to the modern format
+            if (Services_User_Util::passwordNeedsRehash($stored['passhash'])) {
+                $this->_userDao->setUserPassword([
+                    'userid'   => $userId,
+                    'passhash' => Services_User_Util::hashPassword($password),
+                ]);
+            } // if
+        } // if
+
         if ($userId !== false) {
             /*
              * If the user is logged in, create a session.

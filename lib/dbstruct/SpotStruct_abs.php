@@ -520,7 +520,7 @@ abstract class SpotStruct_abs
         $this->createTable('users', 'utf8');
         $this->validateColumn('username', 'users', 'VARCHAR(128)', "''", true, 'utf8');
         $this->validateColumn('firstname', 'users', 'VARCHAR(128)', "''", true, 'utf8');
-        $this->validateColumn('passhash', 'users', 'VARCHAR(40)', "''", true, 'ascii');
+        $this->validateColumn('passhash', 'users', 'VARCHAR(255)', "''", true, 'ascii');
         $this->validateColumn('lastname', 'users', 'VARCHAR(128)', "''", true, 'utf8');
         $this->validateColumn('mail', 'users', 'VARCHAR(128)', "''", true, 'utf8');
         $this->validateColumn('apikey', 'users', 'VARCHAR(32)', "''", true, 'ascii');

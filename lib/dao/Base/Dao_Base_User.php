@@ -375,6 +375,24 @@ class Dao_Base_User implements Dao_User
     // authUser
 
     /*
+     * Returns the id and stored password hash for an active user,
+     * or false if the user does not exist.
+     */
+    public function getUserPasshash($username)
+    {
+        $tmp = $this->_conn->arrayQuery(
+            'SELECT id, passhash FROM users WHERE username = :username AND NOT DELETED',
+            [
+                ':username' => [$username, PDO::PARAM_STR],
+            ]
+        );
+
+        return empty($tmp) ? false : $tmp[0];
+    }
+
+    // getUserPasshash
+
+    /*
      * Updates a users' setting with an base64 encoded image
      */
     public function setUserAvatar($userId, $imageEncoded)

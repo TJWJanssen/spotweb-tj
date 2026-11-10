@@ -54,7 +54,7 @@ class Services_Upgrade_Users
         $dbCon = $this->_dbCon;
 
         // Create an Spotweb API key. It cannot be used but should not be empty
-        $apikey = md5('anonymous');
+        $apikey = bin2hex(random_bytes(16));
 
         // Create the dummy 'anonymous' user
         $anonymous_user = [
@@ -85,7 +85,7 @@ class Services_Upgrade_Users
      */
     public function passToHash($password)
     {
-        return sha1(strrev(substr($this->_settings->get('pass_salt'), 1, 3)).$password.$this->_settings->get('pass_salt'));
+        return password_hash($password, PASSWORD_DEFAULT);
     }
 
     // passToHash
@@ -127,7 +127,7 @@ class Services_Upgrade_Users
         $adminPwdHash = $this->passToHash($password);
 
         // Create an Spotweb API key. It cannot be used but should not be empty
-        $apikey = md5('admin');
+        $apikey = bin2hex(random_bytes(16));
 
         // Create the dummy 'admin' user
         $admin_user = [
