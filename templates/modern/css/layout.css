@@ -13,8 +13,14 @@
 div#filter {
   width: var(--sw-sidebar-w);
   background: var(--color-surface);
-  position: relative;
-  top: 0;
+  /* Keep the menu in view while scrolling the list; it scrolls on its own when taller than the screen. */
+  position: sticky;
+  top: var(--sw-toolbar-offset);
+  max-height: calc(100vh - var(--sw-toolbar-offset) - 6px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
   z-index: 40;
 }
 
@@ -44,7 +50,14 @@ body.filters-open div#filter > .maintenancebox {
 }
 
 body.filters-open div#filter {
-  position: relative;
+  position: sticky;
+  overflow: visible;
+  max-height: none;
+}
+
+body.filters-open div#filter .sidebarPanel {
+  position: fixed;
+  bottom: 0;
 }
 
 body.filters-open div#filter::after {
