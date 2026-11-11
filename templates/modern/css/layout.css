@@ -24,6 +24,10 @@ div#filter {
   z-index: 40;
 }
 
+html.sidebar-pending div#filter {
+  visibility: hidden;
+}
+
 div#filter .sidebarPanel {
   display: none;
   position: absolute;

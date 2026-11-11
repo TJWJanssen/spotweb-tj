@@ -41,6 +41,9 @@ function initSpotwebJs(BetweenText, AndText) {
     attachMaintenanceButtonsBehaviour();
 
     attachEnablerBehaviour();
+
+    // The saved menu state is applied now; show the menu (see sidebar-pending in filters.inc.php).
+    document.documentElement.classList.remove('sidebar-pending');
 } // initSpotwebJs
 
 /**

@@ -5,7 +5,12 @@
     $count_newspots = ($currentSession['user']['prefs']['count_newspots']);
     $show_multinzb_checkbox = ($currentSession['user']['prefs']['show_multinzb']);
 ?>
-		
+			<script>
+				/* Keep the menu hidden until the saved collapsed/expanded state is applied (prevents a flash of the fully expanded menu). */
+				document.documentElement.classList.add('sidebar-pending');
+				setTimeout(function () { document.documentElement.classList.remove('sidebar-pending'); }, 3000);
+			</script>
+
 			<div id="toolbar">
 				<div class="notifications">
 					<?php if ($show_multinzb_checkbox) { ?>
