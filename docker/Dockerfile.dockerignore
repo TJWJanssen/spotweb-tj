@@ -10,3 +10,4 @@ ownsettings.php
 .env
 *.log
 nbproject
+docker/.env
