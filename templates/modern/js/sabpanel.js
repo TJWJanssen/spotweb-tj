@@ -51,6 +51,39 @@ function sabActions(start,limit,action,slot) {
     }
 }
 
+function sabEscape(text) {
+    return $("<div>").text(text == null ? "" : text).html().replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+// Replace the title of a queue item with an input; Enter saves, Escape or an unchanged value cancels.
+function sabStartRename(titleSpan, slot, start, limit) {
+    if (titleSpan.find("input").length) { return; }
+    var input = $("<input type='text' class='sabRename'>").val(slot.filename);
+    var finished = false;
+
+    var finish = function(save) {
+        if (finished) { return; }
+        finished = true;
+        input.removeClass("sabRename"); // lets the refresh redraw the panel again
+        var name = $.trim(input.val());
+        if (save && name != "" && name != slot.filename) {
+            $.get(sabBaseURL()+'&action=rename&id='+encodeURIComponent(slot.id)+'&name='+encodeURIComponent(name), function(){
+                updateSabPanel(start,limit);
+            });
+        } else {
+            updateSabPanel(start,limit);
+        }
+    };
+
+    input.on("keydown", function(e){
+        if (e.which == 13) { e.preventDefault(); finish(true); }
+        else if (e.which == 27) { e.preventDefault(); finish(false); }
+    }).on("blur", function(){ finish(true); });
+
+    titleSpan.empty().append(input);
+    input.focus().select();
+}
+
 function drawGraph(currentSpeed,interval) {
     var numXLabels = 8;
     var numYLabels = 5;
@@ -72,8 +105,11 @@ function drawGraph(currentSpeed,interval) {
     }
 
     var elem = $("canvas#graph");
-    elem.width = $("canvas#graph").width();
-    elem.height = $("canvas#graph").height();
+    // Match the drawing surface to the displayed size so the graph stays sharp at any panel width.
+    elem.width = Math.round($("canvas#graph").width());
+    elem.height = 125;
+    elem[0].width = elem.width;
+    elem[0].height = elem.height;
     var offset = {
         "top": 6,
         "right": 6,
@@ -212,6 +248,9 @@ function updateSabPanel(start,limit) {
     var url = baseURL+'&action=getstatus';
 
     $.getJSON(url, function(json){
+        // Never redraw the panel while a title is being edited (a refresh started just
+        // before the click would otherwise wipe the input right away).
+        if ($("table.sabQueue input.sabRename").length) { return; }
         var queue = json.queue;
 
         if(queue.paused) {var state = "resume";} else {var state = "pause";}
@@ -275,8 +314,16 @@ function updateSabPanel(start,limit) {
                 {
                     if(slot.percentage == 0) {var progress = " empty"} else {var progress = "";}
 
-                    $("table.sabQueue").append("<tr class='title "+index+"'><td><span class='move'><a class='up' title='<t>Up</t>'></a><a class='down' title='<t>Down</t>'></a></span><span class='delete'><a title='<t>Delete from queue</t>'></a></span><strong>"+index+".</strong><span class='title'>"+slot.filename+"</span></td></tr>");
+                    $("table.sabQueue").append("<tr class='title "+index+"'><td><span class='move'><a class='up' title='<t>Up</t>'></a><a class='down' title='<t>Down</t>'></a></span><span class='delete'><a title='<t>Delete from queue</t>'></a></span><span class='rename'><a title='Rename'>&#9998;</a></span><strong>"+index+".</strong><span class='title' title='Double-click to rename'>"+sabEscape(slot.filename)+"</span></td></tr>");
                     $("table.sabQueue").append("<tr class='progressBar'><td><div class='progressBar"+progress+"' title='"+slot.mbremaining+" / "+slot.mbsize+" MB' style='width:"+slot.percentage+"%'></div></td></tr>");
+
+                    var idx = index;
+                    var startRename = function(){
+                        if(timeOut) {clearTimeout(timeOut)}
+                        sabStartRename($("table.sabQueue tr."+idx+" span.title"), slot, start, limit);
+                    };
+                    $("table.sabQueue tr."+index+" span.rename a").click(startRename);
+                    $("table.sabQueue tr."+index+" span.title").dblclick(startRename);
 
                     $("table.sabQueue tr."+index+" a.up").click(function(){
                         if(timeOut) {clearTimeout(timeOut)}
@@ -343,7 +390,9 @@ function updateSabPanel(start,limit) {
                 if($(this).hasClass("hover")) {
                     if(timeOut) {clearTimeout(timeOut)}
                     $(this).removeClass("hover");
-                    updateSabPanel(start,limit);
+                    if($("table.sabQueue input.sabRename").length == 0) {
+                        updateSabPanel(start,limit);
+                    }
                 }
             });
 
@@ -351,7 +400,7 @@ function updateSabPanel(start,limit) {
         drawGraph(queue.bytepersec/1024, interval);
 
         var timeOut = setTimeout(function(){
-            if($("div.sabnzbdPanel").is(":visible") && !($("td.speedlimit input[name=speedLimit]").hasClass("hasFocus")) && !($("tr.title td span.title").hasClass("hover"))) {
+            if($("div.sabnzbdPanel").is(":visible") && !($("td.speedlimit input[name=speedLimit]").hasClass("hasFocus")) && !($("tr.title td span.title").hasClass("hover")) && $("table.sabQueue input.sabRename").length == 0) {
                 updateSabPanel(start,limit);
             }
         }, interval);
