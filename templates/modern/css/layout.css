@@ -45,7 +45,8 @@ div.sidebarPanel.sabnzbdPanel {
   top: calc(var(--sw-toolbar-offset, 42px) + 8px);
   left: 10px;
   bottom: auto;
-  width: 280px;
+  width: 560px;
+  max-width: calc(100vw - 20px);
   max-height: calc(100vh - var(--sw-toolbar-offset, 42px) - 24px);
   overflow-y: auto;
   overflow-x: hidden;
@@ -118,10 +119,76 @@ div.sidebarPanel.sabnzbdPanel a.sabToggle.pause { background: #d97706; }
 div.sidebarPanel.sabnzbdPanel a.sabToggle.resume { background: #16a34a; }
 div.sidebarPanel.sabnzbdPanel a.sabToggle:hover { filter: brightness(1.12); }
 
+div.sidebarPanel.sabnzbdPanel h4 a.sabWebLink {
+  display: inline;
+  background: none;
+  color: inherit;
+  text-decoration: none;
+}
+
+div.sidebarPanel.sabnzbdPanel h4 a.sabWebLink:hover {
+  text-decoration: underline;
+}
+
+/* Queue row: [move][delete] nr. title ........ [rename]; the title is ellipsized, never overlaps the buttons. */
+div.sidebarPanel.sabnzbdPanel table.sabQueue {
+  table-layout: fixed;
+  width: 100%;
+  margin: 0;
+}
+
+div.sidebarPanel.sabnzbdPanel table.sabQueue tr.title td {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: static;
+  padding: 6px 12px 2px;
+}
+
+div.sidebarPanel.sabnzbdPanel table.sabQueue tr.title td > * {
+  float: none;
+  flex: none;
+}
+
+div.sidebarPanel.sabnzbdPanel table.sabQueue tr.title td span.title,
+div.sidebarPanel.sabnzbdPanel table.sabQueue tr.title td span.title:hover {
+  position: static;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+  padding: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: none;
+  z-index: auto;
+  cursor: text;
+}
+
+div.sidebarPanel.sabnzbdPanel table.sabQueue tr.title td span.rename {
+  order: 10;
+}
+
+div.sidebarPanel.sabnzbdPanel table.sabQueue span.rename a {
+  display: block;
+  padding: 0 2px;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+div.sidebarPanel.sabnzbdPanel table.sabQueue span.rename a:hover { opacity: 1; }
+
+div.sidebarPanel.sabnzbdPanel input.sabRename {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 2px;
+  font-size: 12px;
+}
+
 div.sidebarPanel.sabnzbdPanel canvas#graph {
   display: block;
   width: calc(100% - 24px);
-  height: auto;
+  height: 125px;
   margin: 8px 12px;
 }
 

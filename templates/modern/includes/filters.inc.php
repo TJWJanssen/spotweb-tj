@@ -250,7 +250,11 @@
 
 				<div class="sidebarPanel sabnzbdPanel">
 <?php if ($tplHelper->allowed(SpotSecurity::spotsec_use_sabapi, '')) { ?>
-					<h4><a class="toggle" onclick="toggleSidebarPanel('.sabnzbdPanel')" title='<?php echo _('Sluit "'.$tplHelper->getNzbHandlerName().'paneel"'); ?>'>[x]</a><?php echo $tplHelper->getNzbHandlerName(); ?></h4>
+					<h4><a class="toggle" onclick="toggleSidebarPanel('.sabnzbdPanel')" title='<?php echo _('Sluit "'.$tplHelper->getNzbHandlerName().'paneel"'); ?>'>[x]</a><?php
+        $nzbHandlerWebUrl = $currentSession['user']['prefs']['nzbhandling']['sabnzbd']['url'] ?? '';
+        if ($tplHelper->getNzbHandlerApiSupport() !== false && preg_match('#^https?://#i', $nzbHandlerWebUrl)) { ?>
+<a class="sabWebLink" href="<?php echo htmlspecialchars($nzbHandlerWebUrl, ENT_QUOTES); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo htmlspecialchars(sprintf(_('Open %s in a new tab'), $tplHelper->getNzbHandlerName()), ENT_QUOTES); ?>"><?php echo $tplHelper->getNzbHandlerName(); ?> &#8599;</a>
+<?php } else { echo $tplHelper->getNzbHandlerName(); } ?></h4>
 <?php
         $apikey = $tplHelper->apiToHash($currentSession['user']['apikey']);
         echo "<input class='apikey' type='hidden' value='".$apikey."'>";

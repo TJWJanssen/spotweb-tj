@@ -354,7 +354,8 @@ class Services_NzbHandler_Pushsabnzbd extends Services_NzbHandler_abs
     public function rename($id, $name)
     {
         $name = urlencode($name);
-        $output = $this->querySabnzbd('mode=queue&name=rename&value='.$id.'&value2='.$name);
+        $id = urlencode($id);
+        $output = $this->querySabnzbd('mode=queue&name=rename&value='.$id.'&value2='.$name.'&output=json');
         $response = json_decode($output, true);
 
         return $response['status'] == true;
