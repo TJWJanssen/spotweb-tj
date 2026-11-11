@@ -24,3 +24,4 @@ logs/
 bin/.rnd
 spotweb
 data/spotweb-test.sqlite
+docker/.env

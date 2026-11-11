@@ -1,8 +1,11 @@
 # Override: build the image from this checkout instead of pulling it.
+# Run from the docker folder:
 #   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 services:
   web:
-    build: .
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
     pull_policy: never
   retriever:
     pull_policy: never

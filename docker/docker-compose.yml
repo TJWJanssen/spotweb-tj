@@ -1,11 +1,12 @@
 # Spotweb with MariaDB and a background retriever.
 #
+#   cd docker
 #   cp .env.example .env      # and set DB_PASSWORD
 #   docker compose up -d
 #   open http://localhost:8080  (first login: admin / admin - change it right away)
 #
 # The image is pulled from the GitHub Container Registry (built by the "Docker image"
-# workflow). To build it from this checkout instead:
+# workflow). To build it from this checkout instead (run from this folder):
 #   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 #
 # The web container creates/upgrades the database schema on start; the retriever
@@ -58,7 +59,7 @@ services:
     ports:
       - "${SPOTWEB_PORT:-8080}:80"
     # volumes:
-    #   - ./ownsettings.php:/var/www/html/ownsettings.php:ro
+    #   - ../ownsettings.php:/var/www/html/ownsettings.php:ro
     healthcheck:
       # becomes healthy once the schema upgrade at startup has finished
       test: ["CMD-SHELL", "test -f /tmp/spotweb-ready && curl -fsS -o /dev/null http://localhost/install.php"]
