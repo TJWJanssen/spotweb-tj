@@ -36,6 +36,9 @@ services:
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
+      # Spotweb stores millions of comments: give InnoDB a decent buffer pool and allow big insert batches.
+      - --innodb-buffer-pool-size=${DB_BUFFER_POOL:-512M}
+      - --max-allowed-packet=${DB_MAX_ALLOWED_PACKET:-64M}
     volumes:
       - db-data:/var/lib/mysql
     healthcheck:
