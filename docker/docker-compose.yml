@@ -14,7 +14,7 @@
 # Spotweb (Config > Spotweb settings) before expecting any spots.
 name: spotweb
 
-x-spotweb-image: &spotweb-image ${SPOTWEB_IMAGE:-ghcr.io/tjwjanssen/spotweb-tj:security-hardening}
+x-spotweb-image: &spotweb-image ${SPOTWEB_IMAGE:-ghcr.io/tjwjanssen/spotweb-tj:latest}
 
 x-spotweb-env: &spotweb-env
   DB_HOST: db
