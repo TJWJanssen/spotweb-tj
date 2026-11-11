@@ -215,7 +215,8 @@ function updateSabPanel(start,limit) {
         var queue = json.queue;
 
         if(queue.paused) {var state = "resume";} else {var state = "pause";}
-        $("table.sabInfo td.state").html("<strong>"+queue.status+"</strong> (<a class='state' title='"+state+"'>"+state+"</a>)");
+        var stateLabel = queue.paused ? "&#9654; Resume" : "&#10074;&#10074; Pause";
+        $("table.sabInfo td.state").html("<strong>"+queue.status+"</strong> <a class='state sabToggle "+state+"' role='button' title='"+state+" downloads'>"+stateLabel+"</a>");
         $("table.sabInfo td.state a.state").click(function(){
             if(timeOut) {clearTimeout(timeOut)}
             sabActions(start,limit,state+"queue");
